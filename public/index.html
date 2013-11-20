@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:fb="http://ogp.me/ns/fb#">
+<head>
+	<meta charset="utf-8">
+	<title>Knockout Test</title>
+	<link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.css" />
+</head>
+<body>
+
+<!-- ko with : popup -->
+<div id="edit-form" class="modal hide fade" >
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3 data-bind="text : formTitle">Modal header</h3>
+  </div>
+  <div class="modal-body">
+    <p>One fine body…</p>
+    <input data-bind="value : title" />
+  </div>
+  <div class="modal-footer">
+    <a data-bind="click : save" href="#" class="btn btn-primary">Save changes</a>
+  </div>
+</div>
+<!-- /ko -->
+
+<div class="container" data-bind="with : content">
+	<div class="row">
+<ul class="breadcrumb" data-bind="foreach : breadcrumb">
+
+  	<li data-bind="if: (($index()+1) != $parent.breadcrumb().length)">
+  		<a href="#" data-bind="text : name, click : $parent.navClick"></a> 
+  		<span class="divider">/</span>
+  	</li>
+  	<li class="active" data-bind="if:(($index()+1) == $parent.breadcrumb().length)">
+  		<!--ko text : name --><!-- /ko -->
+  	</li>
+  
+  	
+</ul>
+      	<a data-bind="click : add" href="#" class="btn">new</a>        
+		<div class="span12">
+			<table class="table">
+              <thead>
+                <tr>
+                  <th>First Name</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody data-bind="foreach : items">
+                <tr>
+                  <td >
+                  	<a data-bind="text : title, click : $parent.moveToChild" href=""></a>
+                  </td>
+                  <td>
+                  	<a data-bind="click : $parent.remove" href="#" class="btn ">delete</a>
+                  	<a data-bind="click : $parent.edit" href="#" class="btn ">edit</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+		</div>
+	</div>
+
+</div>
+
+<script type="text/javascript"  src="js/knockout-2.3.0.js"></script>
+
+<script type="text/javascript"  src="js/jquery.js"></script>
+<script type="text/javascript"  src="bootstrap/js/bootstrap.js"></script>
+
+<script type="text/javascript">
+
+//List view model 
+var List = function(){
+	var self = this;
+	self.items = ko.observableArray([]);
+
+	self.breadcrumb = ko.observableArray([
+		{ name : 'Home', parentId : 0 }
+	]);
+
+	self.currentCategoryId = ko.computed(function(){
+		return self.breadcrumb()[self.breadcrumb().length-1].parentId;
+	})
+
+	self.navClick = function(item){
+		var result = [];
+		var breadcrumb = self.breadcrumb();
+		for (var i = 0; i < breadcrumb.length; i++) {
+			result.push(breadcrumb[i]);
+			if (breadcrumb[i].parentId == item.parentId) break;
+		}
+		self.breadcrumb(result);
+		self.fetch();
+	}
+
+	self.add = function(){
+		var data = { parentId : self.currentCategoryId() };
+		bus.trigger('add', data);		
+	}
+
+	self.edit = function(item){
+		bus.trigger('edit', { id : item.id });				
+	}
+
+	self.moveToChild = function(item){
+		self.breadcrumb.push({ name : item.title, parentId : item.id });
+		self.fetch();
+	}
+
+	self.fetch = function(){
+		$.get('/api/category', { parentId : self.currentCategoryId() }, self.items);
+	}
+
+	self.remove = function(item){
+		$.delete('/api/category/' + item.id, function(){
+			self.fetch();
+		});
+	}
+}
+
+
+//Edit view model 
+var trigger_refresh = function(){
+	bus.trigger('refresh');
+}
+
+var Edit = function(model){
+	var model = model;
+	var self = this;
+	self.formTitle = ko.observable(model.id ? 'create' : 'update');
+	self.title = ko.observable(model.title);
+
+	self.save = function(){
+		model.title = self.title();
+		if (model.id){
+			$.put('/api/category/' + model.id, model, trigger_refresh);
+		} else {
+			$.post('/api/category', model, trigger_refresh);
+		}
+	}
+}
+
+//app
+var bus = $({});
+
+var app = {
+	popup : ko.observable(null),
+	content : ko.observable(null)
+};
+
+bus.on('refresh', function(){
+	$('#edit-form').modal('hide');
+	app.popup(null);
+	app.content().fetch();
+})
+
+bus.on('add', function(e, data){
+	var model = {
+		title : '',
+		status : "ACTION",
+		range : 5,
+		description : "bla",
+		parentId : data.parentId,
+		isService : 1
+	};
+	app.popup(new Edit(model))
+	$('#edit-form').modal('show');
+})
+
+bus.on('edit', function(e, data){
+	$.get('/api/category/' + data.id, function(model){
+		app.popup(new Edit(model));
+		$('#edit-form').modal('show');		
+	})
+})
+
+
+//utils
+$.delete = function(url, cb){
+	return $.ajax({
+		url : url,
+		type : 'DELETE',
+		success : cb
+	})
+}
+
+$.put = function(url, data, cb){
+	return $.ajax({
+		url : url,
+		data : data,
+		type : 'PUT',
+		success : cb
+	})
+}
+
+
+$(function() {
+	ko.applyBindings(app);
+
+	app.content(new List())
+	app.content().fetch();
+})
+</script>
+</body>
+</html>
