@@ -1,4 +1,6 @@
-//define(["knockout","jquery", "ko.validation"], function(ko, $){
+define(["knockout","jquery"], function(ko, $){
+
+
 
      ko.extenders.localStorage = function(target, opt){
         var key = opt.key;
@@ -81,5 +83,7 @@
 
         return target;
      }
-//})
+
+
+})
 

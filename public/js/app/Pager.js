@@ -1,46 +1,54 @@
-var Pager = function(data){
-	var self = this;
 
-	self.page = ko.observable(1);
-	self.perPage = ko.observable(data.perPage);
+define([
+	"knockout"
+	], function(
+		ko
+		){
 
-	self.itemsCount = ko.observable(1);
+	return function(data){
+		var self = this;
 
-	self.totalPages = ko.computed(function(){
-		if (self.itemsCount() == 0) return 1;
+		self.page = ko.observable(1);
+		self.perPage = ko.observable(data.perPage);
 
-		return Math.ceil(self.itemsCount() / self.perPage());
-	})
+		self.itemsCount = ko.observable(1);
 
-	self.text = ko.computed(function(){
-		return ' page ' + self.page() + ' of ' + self.totalPages();
-	})
+		self.totalPages = ko.computed(function(){
+			if (self.itemsCount() == 0) return 1;
 
-	self.canNotNext = ko.computed(function(){
-		var page = self.page()+1;
-		return page > self.totalPages();
-	});
+			return Math.ceil(self.itemsCount() / self.perPage());
+		})
 
-	self.nextClick = function(){
-		if (self.canNotNext()) return;
+		self.text = ko.computed(function(){
+			return ' page ' + self.page() + ' of ' + self.totalPages();
+		})
 
-		self.page(self.page()+1);
+		self.canNotNext = ko.computed(function(){
+			var page = self.page()+1;
+			return page > self.totalPages();
+		});
+
+		self.nextClick = function(){
+			if (self.canNotNext()) return;
+
+			self.page(self.page()+1);
+		}
+
+		self.canNotPrev = ko.computed(function(){
+			var page = self.page()-1;
+			return page == 0;
+		});
+
+		self.prevClick = function(){
+			if (self.canNotPrev()) return;
+
+			self.page(self.page() - 1);
+		}
+
+		self.setItemsCount = function(count){
+			self.itemsCount(count);
+		}
+
+		self.template = 'pager-template';
 	}
-
-	self.canNotPrev = ko.computed(function(){
-		var page = self.page()-1;
-		return page == 0;
-	});
-
-	self.prevClick = function(){
-		if (self.canNotPrev()) return;
-
-		self.page(self.page() - 1);
-	}
-
-	self.setItemsCount = function(count){
-		self.itemsCount(count);
-	}
-
-	self.template = 'pager-template';
-}
+});

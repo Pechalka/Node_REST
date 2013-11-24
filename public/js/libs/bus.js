@@ -1,1 +1,3 @@
-var bus = $({});
+define(["jquery"], function($){
+	return $({});
+})
