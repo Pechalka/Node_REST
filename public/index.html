@@ -25,18 +25,10 @@
 
 <div class="container" data-bind="with : content">
 	<div class="row">
-<ul class="breadcrumb" data-bind="foreach : breadcrumb">
-
-  	<li data-bind="if: (($index()+1) != $parent.breadcrumb().length)">
-  		<a href="#" data-bind="text : name, click : $parent.navClick"></a> 
-  		<span class="divider">/</span>
-  	</li>
-  	<li class="active" data-bind="if:(($index()+1) == $parent.breadcrumb().length)">
-  		<!--ko text : name --><!-- /ko -->
-  	</li>
-  
-  	
-</ul>
+	<!-- ko with : breadcrumb -->
+		<!-- ko template : { name : template } -->
+		<!-- /ko -->
+	<!-- /ko -->
       	<a data-bind="click : add" href="#" class="btn">new</a>        
 		<div class="span12">
 			<table class="table">
@@ -82,241 +74,31 @@
 </ul>
 </script>
 
-<script type="text/javascript"  src="js/knockout-2.3.0.js"></script>
+<script type="text/template" id="navbar-template">
+<ul class="breadcrumb" data-bind="foreach : breadcrumb">
 
-<script type="text/javascript"  src="js/jquery.js"></script>
-<script type="text/javascript"  src="bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript"  src="js/knockout.localStorage.js"></script>
-
-
-<script type="text/javascript">
-
-var Pager = function(data){
-	var self = this;
-
-	self.page = ko.observable(1);
-	self.perPage = ko.observable(data.perPage);
-
-	self.itemsCount = ko.observable(1);
-
-	self.totalPages = ko.computed(function(){
-		if (self.itemsCount() == 0) return 1;
-
-		return Math.ceil(self.itemsCount() / self.perPage());
-	})
-
-	self.text = ko.computed(function(){
-		return ' page ' + self.page() + ' of ' + self.totalPages();
-	})
-
-	self.canNotNext = ko.computed(function(){
-		var page = self.page()+1;
-		return page > self.totalPages();
-	});
-
-	self.nextClick = function(){
-		if (self.canNotNext()) return;
-
-		self.page(self.page()+1);
-	}
-
-	self.canNotPrev = ko.computed(function(){
-		var page = self.page()-1;
-		return page == 0;
-	});
-
-	self.prevClick = function(){
-		if (self.canNotPrev()) return;
-
-		self.page(self.page() - 1);
-	}
-
-	self.setItemsCount = function(count){
-		self.itemsCount(count);
-	}
-
-	self.template = 'pager-template';
-}
-
-
-//List view model 
-
-var Category = function(data){
-	var self = this;
-
-	self._data = data;
-	self.json = function(){
-		self._data.range = self.range();
-		return self._data;
-	}
-
-	self.id = data.id;
-	self.title = data.title;
-	self.range = ko.observable(data.range);
-
-	self.updateRange = function(offset, cb){
-		self.range(self.range()+offset);
-		data.range = self.range();
-		$.put('/api/category/' + data.id, data, cb);		
-	}
-}
-
-var List = function(){
-	var self = this;
-
-	self.pager = ko.observable(new Pager({ perPage : 5 }));
-
-	self.breadcrumb = ko.observableArray([
-		{ name : 'Home', parentId : 0 }
-	]);
-
-	self.currentCategoryId = ko.computed(function(){
-		return self.breadcrumb()[self.breadcrumb().length-1].parentId;
-	})
-
-	self.navClick = function(item){
-		var result = [];
-		var breadcrumb = self.breadcrumb();
-		for (var i = 0; i < breadcrumb.length; i++) {
-			result.push(breadcrumb[i]);
-			if (breadcrumb[i].parentId == item.parentId) break;
-		}
-		self.breadcrumb(result);
-	}
-
-	self.items = ko.observableArray([])
-					.extend({
-						fetch : {
-							source : '/api/category',
-							params : { 
-								page : self.pager().page,
-								perPage : self.pager().perPage,
-								sortField : 'range',
-								sortDist : 'DESC',
-								parentId : self.currentCategoryId 
-							},
-							proccessReponse : function(response){
-								self.pager().setItemsCount(response.totalCount);
-								return response.items;
-							},
-							map : Category
-						}
-					});
-
-	self.categoryId = ko.observable();
-	self.upClick = function(category){
-		self.categoryId(category.id);
-		category.updateRange(+1, self.fetch)
-	}
-
-	self.downClick = function(category){
-		self.categoryId(category.id);
-		category.updateRange(-1, self.fetch)
-	}
-
-	self.add = function(){
-		bus.trigger('add',  { parentId : self.currentCategoryId() });		
-	}
-
-	self.edit = function(item){
-		bus.trigger('edit', { id : item.id });				
-	}
-
-	self.moveToChild = function(item){
-		self.breadcrumb.push({ name : item.title, parentId : item.id });
-	}
-
-	self.fetch = function(){
-		self.items.reload();
-	}
-
-	self.remove = function(item){
-		$.delete('/api/category/' + item.id, self.fetch);
-	}
-}
-
-
-//Edit view model 
-var trigger_refresh = function(){
-	bus.trigger('refresh');
-}
-
-var Edit = function(model){
-	var model = model;
-	var self = this;
-	self.formTitle = ko.observable(model.id ? 'create' : 'update');
-	self.title = ko.observable(model.title);
-
-	self.save = function(){
-		model.title = self.title();
-		if (model.id){
-			$.put('/api/category/' + model.id, model, trigger_refresh);
-		} else {
-			$.post('/api/category', model, trigger_refresh);
-		}
-	}
-}
-
-//app
-var bus = $({});
-
-var app = {
-	popup : ko.observable(null),
-	content : ko.observable(null)
-};
-
-bus.on('refresh', function(){
-	$('#edit-form').modal('hide');
-	app.popup(null);
-	app.content().fetch();
-})
-
-bus.on('add', function(e, data){
-	var model = {
-		title : '',
-		status : "ACTION",
-		range : 5,
-		description : "bla",
-		parentId : data.parentId,
-		isService : 1
-	};
-	app.popup(new Edit(model))
-	$('#edit-form').modal('show');
-})
-
-bus.on('edit', function(e, data){
-	$.get('/api/category/' + data.id, function(model){
-		app.popup(new Edit(model));
-		$('#edit-form').modal('show');		
-	})
-})
-
-
-//utils
-$.delete = function(url, cb){
-	return $.ajax({
-		url : url,
-		type : 'DELETE',
-		success : cb
-	})
-}
-
-$.put = function(url, data, cb){
-	return $.ajax({
-		url : url,
-		data : data,
-		type : 'PUT',
-		success : cb
-	})
-}
-
-
-$(function() {
-	ko.applyBindings(app);
-
-	app.content(new List())
-	app.content().fetch();
-})
+  	<li data-bind="if: (($index()+1) != $parent.breadcrumb().length)">
+  		<a href="#" data-bind="text : name, click : $parent.navClick"></a> 
+  		<span class="divider">/</span>
+  	</li>
+  	<li class="active" data-bind="if:(($index()+1) == $parent.breadcrumb().length)">
+  		<!--ko text : name --><!-- /ko -->
+  	</li>
+</ul>
 </script>
+
+
+<script type="text/javascript"  src="js/vendor/knockout-2.3.0.js"></script>
+<script type="text/javascript"  src="js/vendor/jquery.js"></script>
+<script type="text/javascript"  src="bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript"  src="js/libs/knockout.localStorage.js"></script>
+<script type="text/javascript"  src="js/libs/bus.js"></script>
+<script type="text/javascript"  src="js/libs/REST.js"></script>
+
+<script type="text/javascript" src="js/app/Pager.js"></script>
+<script type="text/javascript" src="js/app/NavBar.js"></script>
+<script type="text/javascript" src="js/app/CategoryList.js"></script>
+<script type="text/javascript" src="js/app/CategoryEdit.js"></script>
+<script type="text/javascript" src="js/main.js"></script>
 </body>
 </html>
