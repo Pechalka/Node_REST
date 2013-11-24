@@ -14,7 +14,7 @@
     <h3 data-bind="text : formTitle">Modal header</h3>
   </div>
   <div class="modal-body">
-    <p>One fine body…</p>
+    <p>Title</p>
     <input data-bind="value : title" />
   </div>
   <div class="modal-footer">
@@ -42,14 +42,22 @@
 			<table class="table">
               <thead>
                 <tr>
-                  <th>First Name</th>
+                  <th></th>
+                  <th>Category</th>
+                  <th></th>
                   <th></th>
                 </tr>
               </thead>
               <tbody data-bind="foreach : items">
-                <tr>
+                <tr data-bind="css : { info : id == $parent.categoryId() } ">
+                	<td>
+            	 	<a data-bind="click : $parent.upClick" href="" class="btn btn-mini"><i class="icon-chevron-up"></i></a>
+                  	<a data-bind="click : $parent.downClick" href="" class="btn btn-mini"><i class="icon-chevron-down"></i></a>              	
+                 	</td>
                   <td >
                   	<a data-bind="text : title, click : $parent.moveToChild" href=""></a>
+                  </td>
+                  <td data-bind="text : range">
                   </td>
                   <td>
                   	<a data-bind="click : $parent.remove" href="#" class="btn ">delete</a>
@@ -60,20 +68,103 @@
             </table>
 		</div>
 	</div>
-
+	<!-- ko with : pager -->
+		<!-- ko template : { name : template } -->
+		<!-- /ko -->
+	<!-- /ko -->
 </div>
+
+<script type="text/template" id="pager-template">
+<ul class="pager">
+  <li data-bind="css : { disabled : canNotPrev() }"><a href="#" data-bind="click : prevClick">Previous</a></li>
+  <li data-bind="text : text"></li>
+  <li data-bind="css : { disabled : canNotNext() }"><a href="#" data-bind="click : nextClick">Next</a></li>
+</ul>
+</script>
 
 <script type="text/javascript"  src="js/knockout-2.3.0.js"></script>
 
 <script type="text/javascript"  src="js/jquery.js"></script>
 <script type="text/javascript"  src="bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript"  src="js/knockout.localStorage.js"></script>
+
 
 <script type="text/javascript">
 
+var Pager = function(data){
+	var self = this;
+
+	self.page = ko.observable(1);
+	self.perPage = ko.observable(data.perPage);
+
+	self.itemsCount = ko.observable(1);
+
+	self.totalPages = ko.computed(function(){
+		if (self.itemsCount() == 0) return 1;
+
+		return Math.ceil(self.itemsCount() / self.perPage());
+	})
+
+	self.text = ko.computed(function(){
+		return ' page ' + self.page() + ' of ' + self.totalPages();
+	})
+
+	self.canNotNext = ko.computed(function(){
+		var page = self.page()+1;
+		return page > self.totalPages();
+	});
+
+	self.nextClick = function(){
+		if (self.canNotNext()) return;
+
+		self.page(self.page()+1);
+	}
+
+	self.canNotPrev = ko.computed(function(){
+		var page = self.page()-1;
+		return page == 0;
+	});
+
+	self.prevClick = function(){
+		if (self.canNotPrev()) return;
+
+		self.page(self.page() - 1);
+	}
+
+	self.setItemsCount = function(count){
+		self.itemsCount(count);
+	}
+
+	self.template = 'pager-template';
+}
+
+
 //List view model 
+
+var Category = function(data){
+	var self = this;
+
+	self._data = data;
+	self.json = function(){
+		self._data.range = self.range();
+		return self._data;
+	}
+
+	self.id = data.id;
+	self.title = data.title;
+	self.range = ko.observable(data.range);
+
+	self.updateRange = function(offset, cb){
+		self.range(self.range()+offset);
+		data.range = self.range();
+		$.put('/api/category/' + data.id, data, cb);		
+	}
+}
+
 var List = function(){
 	var self = this;
-	self.items = ko.observableArray([]);
+
+	self.pager = ko.observable(new Pager({ perPage : 5 }));
 
 	self.breadcrumb = ko.observableArray([
 		{ name : 'Home', parentId : 0 }
@@ -91,12 +182,40 @@ var List = function(){
 			if (breadcrumb[i].parentId == item.parentId) break;
 		}
 		self.breadcrumb(result);
-		self.fetch();
+	}
+
+	self.items = ko.observableArray([])
+					.extend({
+						fetch : {
+							source : '/api/category',
+							params : { 
+								page : self.pager().page,
+								perPage : self.pager().perPage,
+								sortField : 'range',
+								sortDist : 'DESC',
+								parentId : self.currentCategoryId 
+							},
+							proccessReponse : function(response){
+								self.pager().setItemsCount(response.totalCount);
+								return response.items;
+							},
+							map : Category
+						}
+					});
+
+	self.categoryId = ko.observable();
+	self.upClick = function(category){
+		self.categoryId(category.id);
+		category.updateRange(+1, self.fetch)
+	}
+
+	self.downClick = function(category){
+		self.categoryId(category.id);
+		category.updateRange(-1, self.fetch)
 	}
 
 	self.add = function(){
-		var data = { parentId : self.currentCategoryId() };
-		bus.trigger('add', data);		
+		bus.trigger('add',  { parentId : self.currentCategoryId() });		
 	}
 
 	self.edit = function(item){
@@ -105,17 +224,14 @@ var List = function(){
 
 	self.moveToChild = function(item){
 		self.breadcrumb.push({ name : item.title, parentId : item.id });
-		self.fetch();
 	}
 
 	self.fetch = function(){
-		$.get('/api/category', { parentId : self.currentCategoryId() }, self.items);
+		self.items.reload();
 	}
 
 	self.remove = function(item){
-		$.delete('/api/category/' + item.id, function(){
-			self.fetch();
-		});
+		$.delete('/api/category/' + item.id, self.fetch);
 	}
 }
 

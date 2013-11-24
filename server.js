@@ -15,6 +15,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 var category = DAO('category');
 
 app.get('/api/category', function(req, res){
+    delete req.query['_'];
     category.readAll(req.query, function(e, data){
         res.json(data)
     })
