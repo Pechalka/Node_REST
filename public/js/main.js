@@ -8,6 +8,8 @@ require.config({
     	, "bus" : "libs/bus"
     	, "utils" : "libs/knockout.localStorage"
     	, "REST" : "libs/REST"
+    	, "text": "vendor/text"
+    	, "templateEngine" : "vendor/stringTemplateEngine"
     },
     shim: {
     	"bootstrap" : ["jquery"]
@@ -19,11 +21,12 @@ require([
 	"knockout"
 	, "jquery"
 	, "bus"
-	, "app/CategoryList"
-	, "app/CategoryEdit"
+	, "app/viewModels/CategoryList"
+	, "app/viewModels/CategoryEdit"
 	, "utils"
 	, "REST"
 	, "bootstrap"
+	, "templateEngine"
 	], function(
 		ko
 		, $

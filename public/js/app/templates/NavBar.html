@@ -1,0 +1,10 @@
+<ul class="breadcrumb" data-bind="foreach : breadcrumb">
+
+  	<li data-bind="if: (($index()+1) != $parent.breadcrumb().length)">
+  		<a href="#" data-bind="text : name, click : $parent.navClick"></a> 
+  		<span class="divider">/</span>
+  	</li>
+  	<li class="active" data-bind="if:(($index()+1) == $parent.breadcrumb().length)">
+  		<!--ko text : name --><!-- /ko -->
+  	</li>
+</ul>

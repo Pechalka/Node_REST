@@ -3,15 +3,17 @@ define([
 	"knockout"
 	, "jquery"
 	, "bus"
+	, "text!./../templates/CategoryEdit.html"
 	], function(
 		ko,
 		$,
-		bus
+		bus,
+		template
 		){
-//Edit view model 
-var trigger_refresh = function(){
-	bus.trigger('refresh');
-}
+		
+	var trigger_refresh = function(){
+		bus.trigger('refresh');
+	}
 
 	return function(model){
 		var model = model;
@@ -27,7 +29,6 @@ var trigger_refresh = function(){
 				$.post('/api/category', model, trigger_refresh);
 			}
 		}
-
-		self.template = 'edit-form';
+		self.template = template;
 	}
 });

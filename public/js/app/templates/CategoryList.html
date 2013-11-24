@@ -1,0 +1,40 @@
+	<div class="row">
+	<!-- ko with : breadcrumb -->
+		<!-- ko template : { html : template } -->
+		<!-- /ko -->
+	<!-- /ko -->
+      	<a data-bind="click : add" href="#" class="btn">new</a>        
+		<div class="span12">
+			<table class="table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Category</th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody data-bind="foreach : items">
+                <tr data-bind="css : { info : id == $parent.categoryId() } ">
+                	<td>
+            	 	<a data-bind="click : $parent.upClick" href="" class="btn btn-mini"><i class="icon-chevron-up"></i></a>
+                  	<a data-bind="click : $parent.downClick" href="" class="btn btn-mini"><i class="icon-chevron-down"></i></a>              	
+                 	</td>
+                  <td >
+                  	<a data-bind="text : title, click : $parent.moveToChild" href=""></a>
+                  </td>
+                  <td data-bind="text : range">
+                  </td>
+                  <td>
+                  	<a data-bind="click : $parent.remove" href="#" class="btn ">delete</a>
+                  	<a data-bind="click : $parent.edit" href="#" class="btn ">edit</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+		</div>
+	</div>
+	<!-- ko with : pager -->
+		<!-- ko template : { html : template } -->
+		<!-- /ko -->
+	<!-- /ko -->

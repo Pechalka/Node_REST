@@ -1,8 +1,10 @@
 
 define([
 	"knockout"
+	, "text!./../templates/Pager.html"
 	], function(
 		ko
+		, template
 		){
 
 	return function(data){
@@ -49,6 +51,6 @@ define([
 			self.itemsCount(count);
 		}
 
-		self.template = 'pager-template';
+		self.template = template;
 	}
 });

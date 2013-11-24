@@ -5,12 +5,14 @@ define([
 	, "bus"
 	, "./Pager"
 	, "./NavBar"
+	, "text!./../templates/CategoryList.html"
 	], function(
 		ko,
 		$,
 		bus,
 		Pager,
-		NavBar
+		NavBar,
+		template
 		){
 
 var Category = function(data){
@@ -87,6 +89,6 @@ var Category = function(data){
 		}
 
 
-		self.template = 'categories-list';
+		self.template = template;
 	}
 })

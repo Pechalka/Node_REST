@@ -1,8 +1,10 @@
 
 define([
 	"knockout"
+	, "text!./../templates/NavBar.html"
 	], function(
 		ko
+		, template
 		){
 
 	return  function(data){
@@ -29,6 +31,6 @@ define([
 			self.breadcrumb.push(item);
 		}
 
-		self.template = 'navbar-template';
+		self.template = template;
 	}
 });
