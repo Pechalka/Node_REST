@@ -27,5 +27,7 @@ var trigger_refresh = function(){
 				$.post('/api/category', model, trigger_refresh);
 			}
 		}
+
+		self.template = 'edit-form';
 	}
 });

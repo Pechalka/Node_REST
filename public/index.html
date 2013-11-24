@@ -8,22 +8,17 @@
 <body>
 
 <!-- ko with : popup -->
-<div id="edit-form" class="modal hide fade" >
-  <div class="modal-header">
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-    <h3 data-bind="text : formTitle">Modal header</h3>
-  </div>
-  <div class="modal-body">
-    <p>Title</p>
-    <input data-bind="value : title" />
-  </div>
-  <div class="modal-footer">
-    <a data-bind="click : save" href="#" class="btn btn-primary">Save changes</a>
-  </div>
-</div>
+		<!-- ko template : { name : template } -->
+		<!-- /ko -->
 <!-- /ko -->
 
 <div class="container" data-bind="with : content">
+		<!-- ko template : { name : template } -->
+		<!-- /ko -->
+</div>
+
+
+<script type="text/template" id="categories-list">
 	<div class="row">
 	<!-- ko with : breadcrumb -->
 		<!-- ko template : { name : template } -->
@@ -64,7 +59,25 @@
 		<!-- ko template : { name : template } -->
 		<!-- /ko -->
 	<!-- /ko -->
+
+</script>
+
+<script type="text/template" id="edit-form">
+<div id="edit-form" class="modal hide fade" >
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3 data-bind="text : formTitle">Modal header</h3>
+  </div>
+  <div class="modal-body">
+    <p>Title</p>
+    <input data-bind="value : title" />
+  </div>
+  <div class="modal-footer">
+    <a data-bind="click : save" href="#" class="btn btn-primary">Save changes</a>
+  </div>
 </div>
+</script>
+
 
 <script type="text/template" id="pager-template">
 <ul class="pager">

@@ -85,5 +85,8 @@ var Category = function(data){
 		self.remove = function(item){
 			$.delete('/api/category/' + item.id, self.fetch);
 		}
+
+
+		self.template = 'categories-list';
 	}
 })
